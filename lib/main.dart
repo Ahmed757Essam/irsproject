@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:isrprojectnew/providers/auth_provider.dart';
 import 'package:isrprojectnew/providers/jobs_provider.dart';
+import 'package:isrprojectnew/providers/token_provider.dart';  // استيراد TokenProvider
 import 'package:isrprojectnew/screens/after_login/homeafterlogin.dart';
 import 'package:isrprojectnew/screens/after_login/internships.dart';
 import 'package:isrprojectnew/screens/after_login/profile.dart';
@@ -16,6 +17,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()..initialize()),
         ChangeNotifierProvider(create: (_) => JobsProvider()),
+        ChangeNotifierProvider(create: (_) => TokenProvider()),  // إضافة TokenProvider هنا
       ],
       child: const MyApp(),
     ),

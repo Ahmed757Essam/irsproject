@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:isrprojectnew/api/api_service.dart';
+import 'package:isrprojectnew/providers/token_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthProvider with ChangeNotifier {
@@ -43,19 +45,45 @@ class AuthProvider with ChangeNotifier {
   }
 
   // Login user
-  Future<void> login({
+// Login user
+  Future<void> login(BuildContext context, {
     required String email,
-    required String password,
+    required String password
   }) async {
     try {
-      await ApiService.loginUser(email: email, password: password);
-      _isAuthenticated = true;
-      await loadUserProfile();
+      final response = await ApiService.loginUser(
+          email: email,
+          password: password
+      );
+
+      final accessToken = response['accessToken'];
+      final refreshToken = response['refreshToken'];
+
+      if (accessToken == null || accessToken.isEmpty) {
+        throw Exception("No access token received");
+      }
+
+      // Save tokens to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('accessToken', accessToken);
+      if (refreshToken != null) {
+        await prefs.setString('refreshToken', refreshToken);
+      }
+
+      // Update TokenProvider
+      final tokenProvider = Provider.of<TokenProvider>(context, listen: false);
+      tokenProvider.setToken(accessToken);
+
       notifyListeners();
     } catch (e) {
-      rethrow;
+      // Remove the nested Exception wrapping
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
   }
+
+
+
+
 
   // Load user profile
   Future<void> loadUserProfile() async {
