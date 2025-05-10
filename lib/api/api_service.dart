@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8080';
+  static const String baseUrl = 'https://irs.api.exfresher.com';
 
   // Helper method to get headers with auth token
   static Future<Map<String, String>> _getHeaders() async {
@@ -44,33 +44,36 @@ class ApiService {
       throw Exception('Failed to register: ${response.body}');
     }
   }
-
-  // User Login true
   static Future<Map<String, dynamic>> loginUser({
     required String email,
-    required String password,
+    required String password
   }) async {
-    final url = Uri.parse('$baseUrl/users/login/');
+    final url = Uri.parse('https://irs.api.exfresher.com/users/login');
     final response = await http.post(
       url,
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-      }),
       headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
     );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      // Save tokens to shared preferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('accessToken', data['accessToken']);
-      await prefs.setString('refreshToken', data['refreshToken']);
-      return data;
+    final responseData = jsonDecode(response.body);
+
+    // Accept both 200 (OK) and 201 (Created) as success status codes
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      if (responseData['accessToken'] == null) {
+        throw Exception("Access token not found in response");
+      }
+      return responseData;
     } else {
-      throw Exception('Failed to login: ${response.body}');
+      final message = responseData['message'] ?? 'Login failed with status ${response.statusCode}';
+      throw Exception(message);
     }
   }
+
+
+
+
+
+
 
   // Refresh Token
   static Future<Map<String, dynamic>> refreshToken() async {
